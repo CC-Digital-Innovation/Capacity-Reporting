@@ -5,37 +5,62 @@ import csv
 import io
 import os
 import configparser
+import datetime
 
 #GLOBALS
 CWD = os.getcwd()
-CONFIGPATH=os.path.join(CWD,'config')
+CONFIGDIR=os.path.join(CWD,'config')
+CONFIGPATH=os.path.join(CONFIGDIR,'config.ini')
 CSVPATH = os.path.join(CWD,'CSVData')
 MODULESPATH = os.path.join(CWD,'modules')
 TB = ((1/1024)/1024)/1024
+time = datetime.datetime.now()
+DTIME = time.strftime("%Y%H%M")
+config = configparser.ConfigParser()
+config.read(CONFIGPATH)
+NOCOKEY = config.get('noco', 'api_key')
+NOCOURL = config.get('noco', 'url')
 
 #Helper function to define dictionary after getting each data set from a device
 def makedict(device, used, failed, freespace, totalcap, rawpercent, percentage):
     fulldict = {
-            'Array'          : device['Name'],
-            'Type'           : device['type'],
-            'Division'       : device['Division'],
-            'Geo'            : device['Geo'],
-            'Serial Number'  : device['SN'],
-            'Used'           : used,
-            'Failed'         : failed,
-            'Free'           : freespace,
-            'Total Capacity' : totalcap,
-            'Percent Used'   : round(rawpercent, 4),
-            'Percent Used(%)': round(percentage, 2)
-            }
+            'csvdict': {
+                'Date'           : DTIME,
+                'Array'          : device['Name'],
+                'Type'           : device['type'],
+                'Division'       : device['Division'],
+                'Geo'            : device['Geo'],
+                'Serial Number'  : device['SN'],
+                'Used'           : used,
+                'Failed'         : failed,
+                'Free'           : freespace,
+                'Total Capacity' : totalcap,
+                'Percent Used'   : round(rawpercent, 4),
+                'Percent Used(%)': round(percentage, 2)
+        },
+            'nocodict' : {
+                'Date'              : f"{DTIME}",
+                'Array'             : device['Name'],
+                'Type'              : device['type'],
+                'Division'          : device['Division'],
+                'Geo'               : device['Geo'],
+                'SerialNumber'      : device['SN'],
+                'Used'              : used,
+                'Failed'            : failed,
+                'Free'              : freespace,
+                'TotalCapacity'     : totalcap,
+                'PercentUsed'       : round(rawpercent, 4),
+                'PercentUsedString' : round(percentage, 2)
+        }
+    }
 
     return fulldict
 
 #Main code
 def main():
     #Read lookup file and initialize csvdata array
-    csvdata = []
-    with open(os.path.join(CONFIGPATH, 'lookup.json'), "r") as lookupfile:
+    alldata = []
+    with open(os.path.join(CONFIGDIR, 'lookup.json'), "r") as lookupfile:
         lookup = json.load(lookupfile)
 
     #iterate over all the devices in the lookup
@@ -66,7 +91,7 @@ def main():
 
             #calls helper function to make dictionary and adds to running list
             xtremiodict = makedict(device, round(used*TB, 3), 0, round(freespace*TB, 3), round(float(totcap)*TB, 3), rawpercent, percentuse)
-            csvdata.append(xtremiodict)
+            alldata.append(xtremiodict)
             #xtremiodict={}
 
         #Pure Storage Devices
@@ -86,7 +111,7 @@ def main():
             
             #Calls helper function to make dict and adds to running list
             puredict = makedict(device, usedspace, 0, freespace, totalspace, float(puredata['PercUsed']), float(puredata['Used(%)']))
-            csvdata.append(puredict)
+            alldata.append(puredict)
 
         #VMAX
         elif device['type']=="VMAX":
@@ -104,8 +129,8 @@ def main():
                 if split:
                     if split[0] == 'TBs':
                         percused=1-(float(split[2])/float(split[1]))
-                        vmaxdict = makedict(device, split[3], 0, split[2], split[1], percused, percused*100)
-                        csvdata.append(vmaxdict)
+                        vmaxdict = makedict(device, float(split[3]), 0, float(split[2]), float(split[1]), percused, percused*100)
+                        alldata.append(vmaxdict)
 
         #Data Domain
         elif device['type']=="DataDomain":
@@ -116,18 +141,41 @@ def main():
                     'Accept': 'application/json'
             }
             creds = {
-                'username' : device['username'],
-                'password' : device['password']
+                "username" : f"{device['username']}",
+                "password" : f"{device['password']}"
             }
             auth = requests.post(f'https://{ip}:3009/rest/v1.0/auth' , headers=headers, data = json.dumps(creds), verify =False)
-            print(auth.content)
+            headers['X-DD-AUTH-TOKEN']=auth.headers['X-DD-AUTH-TOKEN']
+            system = requests.get(f'https://{ip}:3009/rest/v1.0/system' , headers=headers, verify =False)
+            
+            #calc percentages
+            usedDD = (float(system.json()['physical_capacity']['used'])*TB)/1024
+            totalDD = (float(system.json()['physical_capacity']['total'])*TB)/1024
+            freespaceDD = (float(system.json()['physical_capacity']['available'])*TB)/1024
+            rawpercentDD=round(1-(freespaceDD/totalDD), 4)
+            percentuseDD = rawpercentDD*100
 
+            DDdict = makedict(device, round(usedDD, 3), 0, round(freespaceDD, 3), round(totalDD, 3), rawpercentDD, percentuseDD)
+            alldata.append(DDdict)
 
     #Writes csv data based on data added to csv list
-    with open(os.path.join(CSVPATH, "report.csv"), "w") as f:
-        writer = csv.DictWriter(f, csvdata[0].keys())
+    nocodata=[]
+    with open(os.path.join(CSVPATH, f"{DTIME}_report.csv"), "w") as f:
+        writer = csv.DictWriter(f, alldata[0]['csvdict'].keys())
         writer.writeheader()
-        writer.writerows(csvdata)
+        for row in alldata:
+            nocodata.append(row['nocodict'])
+            writer.writerow(row['csvdict'])
+    
+    #post data to noco in bulk
+   """header = {
+        'xc-auth' : NOCOKEY,
+        'Content-Type' : 'application/json'
+    }
+
+    response = requests.post(NOCOURL, headers=header, data = json.dumps(nocodata))
+
+    print(response.content)"""
 
 if __name__== "__main__":
         main()
