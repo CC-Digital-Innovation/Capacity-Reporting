@@ -131,4 +131,5 @@ dmypy.json
 #Configuration
 lookup.json
 config.ini
+runreport.bat
 CSVData/

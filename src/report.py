@@ -15,7 +15,7 @@ CSVPATH = os.path.join(CWD,'CSVData')
 MODULESPATH = os.path.join(CWD,'modules')
 TB = ((1/1024)/1024)/1024
 time = datetime.datetime.now()
-DTIME = time.strftime("%Y%H%M")
+DTIME = time.strftime("%Y_%m_%d_%H")
 config = configparser.ConfigParser()
 config.read(CONFIGPATH)
 NOCOKEY = config.get('noco', 'api_key')
@@ -134,8 +134,7 @@ def main():
 
         #Data Domain
         elif device['type']=="DataDomain":
-            #Needs to get API key to give to subsequent endpoints from auth endpoint 
-            #NOTE: Currently failing with Invalid Username/Pass error I think some setting may need to be set for the admin user or a new user created.
+            #Needs to get API key to give to subsequent endpoints from auth endpoint
             headers = {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
@@ -160,7 +159,7 @@ def main():
 
     #Writes csv data based on data added to csv list
     nocodata=[]
-    with open(os.path.join(CSVPATH, f"{DTIME}_report.csv"), "w") as f:
+    with open(os.path.join(CSVPATH, f'{DTIME}_report.csv'), "w") as f:
         writer = csv.DictWriter(f, alldata[0]['csvdict'].keys())
         writer.writeheader()
         for row in alldata:
@@ -168,14 +167,16 @@ def main():
             writer.writerow(row['csvdict'])
     
     #post data to noco in bulk
-   """header = {
+    header = {
         'xc-auth' : NOCOKEY,
         'Content-Type' : 'application/json'
     }
 
-    response = requests.post(NOCOURL, headers=header, data = json.dumps(nocodata))
+    #response = requests.post(NOCOURL, headers=header, data = json.dumps(nocodata))
 
-    print(response.content)"""
+
+
+    
 
 if __name__== "__main__":
         main()
