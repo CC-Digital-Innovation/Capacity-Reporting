@@ -8,7 +8,7 @@ import configparser
 import datetime
 
 #GLOBALS
-CWD = os.getcwd()
+CWD = os.path.dirname(__file__)
 CONFIGDIR=os.path.join(CWD,'config')
 CONFIGPATH=os.path.join(CONFIGDIR,'config.ini')
 CSVPATH = os.path.join(CWD,'CSVData')
@@ -56,6 +56,14 @@ def makedict(device, used, failed, freespace, totalcap, rawpercent, percentage):
 
     return fulldict
 
+#fucntion to write single device csvs
+def csvfunc(content, filename):
+    with open(filename, 'w') as file:
+        print("hello")
+        write = csv.DictWriter(file, content.keys())
+        write.writeheader()
+        write.writerow(content)
+
 #Main code
 def main():
     #Read lookup file and initialize csvdata array
@@ -92,7 +100,10 @@ def main():
             #calls helper function to make dictionary and adds to running list
             xtremiodict = makedict(device, round(used*TB, 3), 0, round(freespace*TB, 3), round(float(totcap)*TB, 3), rawpercent, percentuse)
             alldata.append(xtremiodict)
-            #xtremiodict={}
+
+            #write singlecsv
+            csvfunc(xtremiodict['csvdict'], os.path.join(CSVPATH, f"{DTIME}_{device['Name']}.csv"))
+
 
         #Pure Storage Devices
         elif device['type']=="Pure":
@@ -112,6 +123,8 @@ def main():
             #Calls helper function to make dict and adds to running list
             puredict = makedict(device, usedspace, 0, freespace, totalspace, float(puredata['PercUsed']), float(puredata['Used(%)']))
             alldata.append(puredict)
+            #write singlecsv
+            csvfunc(puredict['csvdict'], os.path.join(CSVPATH, f"{DTIME}_{device['Name']}.csv"))
 
         #VMAX
         elif device['type']=="VMAX":
@@ -131,6 +144,8 @@ def main():
                         percused=1-(float(split[2])/float(split[1]))
                         vmaxdict = makedict(device, float(split[3]), 0, float(split[2]), float(split[1]), percused, percused*100)
                         alldata.append(vmaxdict)
+                        #write singlecsv
+                        csvfunc(vmaxdict['csvdict'], os.path.join(CSVPATH, f"{DTIME}_{device['Name']}.csv"))
 
         #Data Domain
         elif device['type']=="DataDomain":
@@ -154,8 +169,11 @@ def main():
             rawpercentDD=round(1-(freespaceDD/totalDD), 4)
             percentuseDD = rawpercentDD*100
 
-            DDdict = makedict(device, round(usedDD, 3), 0, round(freespaceDD, 3), round(totalDD, 3), rawpercentDD, percentuseDD)
+            DDdictmakedict(device, round(usedDD, 3), 0, round(freespaceDD, 3), round(totalDD, 3), rawpercentDD, percentuseDD)
             alldata.append(DDdict)
+
+            #write singlecsv
+            csvfunc(DDdict['csvdict'], os.path.join(CSVPATH, f"{DTIME}_{device['Name']}.csv"))
 
     #Writes csv data based on data added to csv list
     nocodata=[]
@@ -172,7 +190,7 @@ def main():
         'Content-Type' : 'application/json'
     }
 
-    #response = requests.post(NOCOURL, headers=header, data = json.dumps(nocodata))
+    response = requests.post(NOCOURL, headers=header, data = json.dumps(nocodata))
 
 
 
