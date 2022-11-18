@@ -169,7 +169,7 @@ def main():
             rawpercentDD=round(1-(freespaceDD/totalDD), 4)
             percentuseDD = rawpercentDD*100
 
-            DDdictmakedict(device, round(usedDD, 3), 0, round(freespaceDD, 3), round(totalDD, 3), rawpercentDD, percentuseDD)
+            DDdict =  makedict(device, round(usedDD, 3), 0, round(freespaceDD, 3), round(totalDD, 3), rawpercentDD, percentuseDD)
             alldata.append(DDdict)
 
             #write singlecsv

@@ -131,5 +131,6 @@ dmypy.json
 #Configuration
 lookup.json
 config.ini
+config-NocoDB.ini
 runreport.bat
 CSVData/
