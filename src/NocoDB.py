@@ -16,7 +16,6 @@ config.read('config.ini')
 url = config.get('noco', 'url')
 API_TOKEN = config.get('noco', 'xc-auth')
 CONTENT_TYPE = 'application/json'
-PROJECT_ID = 'eq_ast_be9y'
 URL = url + 'nc/eq_ast_be9y/api/v1/testTable'
 
 header = {
