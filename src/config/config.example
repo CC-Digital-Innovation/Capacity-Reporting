@@ -1,3 +1,8 @@
 [noco]
 base_url =
 api_key = 
+xc-auth = 
+type = 
+project_id = 
+url = 
+url_multi = 
