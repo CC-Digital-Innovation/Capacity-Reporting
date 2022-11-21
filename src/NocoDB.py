@@ -7,8 +7,8 @@ import requests
 import pandas as pd
 
 app = FastAPI(
-    title = "Capacity Storage",
-    description= "Downloads data from NocoDB as CSV"
+    title="Capacity Storage",
+    description="Downloads data from NocoDB as CSV"
 )
 
 config = configparser.ConfigParser()
@@ -21,7 +21,8 @@ URL = url + 'testTable'
 header = {
     'xc-auth': API_TOKEN,
     "accept": CONTENT_TYPE
-    }
+}
+
 
 @logger.catch
 @app.get("/NocoDB/{id}")
@@ -45,20 +46,20 @@ async def get_One_Storage_Capacity_Reporting(id: int):
         x = [dictionary['x']]
 
         csv_Headers = [
-                        "Date",
-                        "Array",
-                        "Type",
-                        "Division",
-                        "Geo",
-                        "Serial Number",
-                        "Used",
-                        "Failed",
-                        "Free",
-                        "Total Capacity",
-                        "Percent Used",
-                        "Percent Used (%)",
-                        "x"
-                    ]
+            "Date",
+            "Array",
+            "Type",
+            "Division",
+            "Geo",
+            "Serial Number",
+            "Used",
+            "Failed",
+            "Free",
+            "Total Capacity",
+            "Percent Used",
+            "Percent Used (%)",
+            "x"
+        ]
 
         csv_Rows = list(zip(
                         date,
@@ -74,10 +75,11 @@ async def get_One_Storage_Capacity_Reporting(id: int):
                         percentUsed,
                         percentUsedSymbol,
                         x
-                    ))
+                        ))
 
-        name = dictionary['Name']
-        with open(f'{name}.csv', 'w', encoding='UTF8', newline='') as f:
+        name = dictionary['Array']
+        date = dictionary['Date']
+        with open(f'./CSVData/API/{name}-{date}.csv', 'w', encoding='UTF8', newline='') as f:
             writer = csv.writer(f)
 
             # write the headers
@@ -85,19 +87,20 @@ async def get_One_Storage_Capacity_Reporting(id: int):
             # write the rows
             for data in csv_Rows:
                 writer.writerow(data)
-        return{
+        return {
             "message": "Download successful!"
         }
     else:
-        return{
+        return {
             "message": "ID or data does not exist...try again."
         }
 
+
 @logger.catch
 @app.get("/NocoDB/filter/")
-async def get_Multiple_Storage_Capacity_Reportings(start_date: str, 
-                                                   end_date: str, 
-                                                   #fieldNames: str, 
+async def get_Multiple_Storage_Capacity_Reportings(start_date: str,
+                                                   end_date: str,
+                                                   # fieldNames: str,
                                                    Date: bool,
                                                    Array: bool,
                                                    Type: bool,
@@ -115,32 +118,33 @@ async def get_Multiple_Storage_Capacity_Reportings(start_date: str,
     r = requests.get(URL, headers=header)
     dictionary = json.loads(r.text)
 
-    df = pd.DataFrame(dictionary) # works for more than one row (which is what we need)
-    
+    # works for more than one row (which is what we need)
+    df = pd.DataFrame(dictionary)
+
     dict = {
-    "created_at": start_date,
-    "Date": Date,
-    "Array": Array,
-    "Type": Type,
-    "Division": Division,
-    "Geo": Geo,
-    "Serial Number": Serial_Number,
-    "Used": Used,
-    "Failed": Failed,
-    "Free": Free,
-    "Total Capacity": Total_Capacity,
-    "Percent Used": Percent_Used,
-    "Percent Used (%)": Percentage_Used,
-    "x": x
+        "created_at": start_date,
+        "Date": Date,
+        "Array": Array,
+        "Type": Type,
+        "Division": Division,
+        "Geo": Geo,
+        "Serial Number": Serial_Number,
+        "Used": Used,
+        "Failed": Failed,
+        "Free": Free,
+        "Total Capacity": Total_Capacity,
+        "Percent Used": Percent_Used,
+        "Percent Used (%)": Percentage_Used,
+        "x": x
     }
-    
+
     csv_Headings = ["Name"]
     for key, value in dict.items():
-            csv_Headings.append(key)
-    
+        csv_Headings.append(key)
+
     csv_Headings.remove("created_at")
     # take string date as parameter and concatenate the date with the time starting at 00:00:00 and ending 23:59:59. that way you won't need to strip
-    start_date = start_date + " 00:00" # 00:00:00
+    start_date = start_date + " 00:00"  # 00:00:00
     end_date = end_date + " 23:59"     # 23:59:59
     # Select DataFrame rows between two dates
     data = (df['created_at'] >= start_date) & (df['created_at'] <= end_date)
@@ -168,9 +172,11 @@ async def get_Multiple_Storage_Capacity_Reportings(start_date: str,
             while count < len(dfNames):
                 devices.append(dfNames[count][1])
                 count = count+1
-    #reset count
+    # reset count
     count = 0
-    
+
+
+
     if Date is False:
         Date = []
         index = 0
@@ -318,7 +324,7 @@ async def get_Multiple_Storage_Capacity_Reportings(start_date: str,
             # reset index
             index = 0
             i = i+1
-    
+
     if Used is False:
         Used = []
         index = 0
@@ -465,7 +471,7 @@ async def get_Multiple_Storage_Capacity_Reportings(start_date: str,
             # reset index
             index = 0
             i = i+1
-    
+
     csv_Rows = list(zip(
                     devices,    # Names of devices. Currently using "Array" for name
                     Date,
@@ -481,7 +487,7 @@ async def get_Multiple_Storage_Capacity_Reportings(start_date: str,
                     Percent_Used,
                     Percentage_Used,
                     x
-                ))
+                    ))
 
     with open(f'NeedsName-FastAPI-Test.csv', 'w', encoding='UTF8', newline='') as f:
         writer = csv.writer(f)
@@ -496,22 +502,22 @@ async def get_Multiple_Storage_Capacity_Reportings(start_date: str,
     # reading the CSV file
     text = open("NeedsName-FastAPI-Test.csv", "r")
 
-    #join() method combines all contents of 
+    # join() method combines all contents of
     # csv file and formed as a string
-    text = ''.join([i for i in text]) 
+    text = ''.join([i for i in text])
 
     # search and replace the contents
-    text = text.replace("[None]", "") 
-    text = text.replace("None", "") 
-    text = text.replace("[]", "") 
-    text = text.replace("[", "") 
-    text = text.replace("]", "") 
+    text = text.replace("[None]", "")
+    text = text.replace("None", "")
+    text = text.replace("[]", "")
+    text = text.replace("[", "")
+    text = text.replace("]", "")
     text = text.replace(f"[\'", "")
     text = text.replace(f"\']", "")
     text = text.replace(f"\'", "")
 
     # NeedsName.csv is the output file opened in write mode
-    x = open("NeedsName-FastAPI-Test.csv","w")
+    x = open("NeedsName-FastAPI-Test.csv", "w")
 
     # all the replaced text is written back to NeedsName.csv file
     x.writelines(text)
