@@ -190,7 +190,7 @@ def main():
         'Content-Type' : 'application/json'
     }
 
-    response = requests.post(NOCOURL, headers=header, data = json.dumps(nocodata))
+    response = requests.post(NOCOURL + 'testTable/bulk', headers=header, data = json.dumps(nocodata))
 
 
 

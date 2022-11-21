@@ -12,11 +12,11 @@ app = FastAPI(
 )
 
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read('.\config\config.ini')
 url = config.get('noco', 'url')
-API_TOKEN = config.get('noco', 'xc-auth')
+API_TOKEN = config.get('noco', 'api_key')
 CONTENT_TYPE = 'application/json'
-URL = url + 'nc/eq_ast_be9y/api/v1/testTable'
+URL = url + 'testTable'
 
 header = {
     'xc-auth': API_TOKEN,
