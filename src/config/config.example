@@ -1,4 +1,7 @@
 [noco]
-api_key = 
-xc-auth = 
-url = 
+api_key = NoCo API Token
+urlbulk = NoCo bulk endpoint
+url =     Noco base url
+
+[datapath]
+netpath = Network path (ie \\HOST\target\path)
