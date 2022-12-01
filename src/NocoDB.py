@@ -22,8 +22,8 @@ CONTENT_TYPE = 'application/json'
 
 @logger.catch
 @app.get("/NocoDB/array/")
-async def get_Array_Names():
-    URL = url + "testTable/groupby?column_name=Array&limit=25&offset=0&shuffle=0"
+async def get_Array_Names(limit: int):
+    URL = url + f"testTable/groupby?column_name=Array&limit={limit}&offset=0&shuffle=0"
 
     header = {
         'xc-auth': API_TOKEN,
@@ -44,8 +44,8 @@ async def get_Array_Names():
 
 @logger.catch
 @app.get("/NocoDB/geo/")
-async def get_Geo_Locations():
-    URL = url + "testTable/groupby?column_name=Geo&limit=25&offset=0&shuffle=0"
+async def get_Geo_Locations(limit: int):
+    URL = url + f"testTable/groupby?column_name=Geo&limit={limit}&offset=0&shuffle=0"
 
     header = {
         'xc-auth': API_TOKEN,
@@ -66,8 +66,8 @@ async def get_Geo_Locations():
 
 @logger.catch
 @app.get("/NocoDB/division/")
-async def get_Divisions():
-    URL = url + "testTable/groupby?column_name=Division&limit=25&offset=0&shuffle=0"
+async def get_Divisions(limit: int):
+    URL = url + f"testTable/groupby?column_name=Division&limit={limit}&offset=0&shuffle=0"
 
     header = {
         'xc-auth': API_TOKEN,
@@ -88,8 +88,8 @@ async def get_Divisions():
 
 @logger.catch
 @app.get("/NocoDB/type/")
-async def get_Types():
-    URL = url + "testTable/groupby?column_name=Type&limit=25&offset=0&shuffle=0"
+async def get_Types(limit: int):
+    URL = url + f"testTable/groupby?column_name=Type&limit={str(limit)}&offset=0&shuffle=0"
 
     header = {
         'xc-auth': API_TOKEN,
