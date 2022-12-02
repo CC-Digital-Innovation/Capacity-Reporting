@@ -5,3 +5,5 @@ url =     Noco base url
 
 [datapath]
 netpath = Network path (ie \\HOST\target\path)
+shareuser = network user
+sharepass = network password

@@ -20,7 +20,8 @@ config.read(CONFIGPATH)
 NOCOKEY = config.get('noco', 'api_key')
 NOCOURL = config.get('noco', 'urlbulk')
 CSVPATH = config.get('datapath', 'netpath')
-
+SHAREUSR = config.get('datapath', 'shareuser')
+SHAREPASS = config.get('datapath', 'sharepass')
 #Helper function to define dictionary after getting each data set from a device
 def makedict(device, used, failed, freespace, totalcap, rawpercent, percentage):
     fulldict = {
@@ -65,6 +66,11 @@ def csvfunc(content, filename):
 
 #Main code
 def main():
+    #connect to fileshare
+    if not os.path.isdir(CSVPATH):
+        output = subprocess.run(["net", "use", CSVPATH, SHAREPASS, SHAREUSR, '/persistent:yes'])
+    else:
+        flag = True
     #Read lookup file and initialize csvdata array
     alldata = []
     with open(os.path.join(CONFIGDIR, 'lookup.json'), "r") as lookupfile:
@@ -205,6 +211,9 @@ def main():
             nocodata.append(row['nocodict'])
             writer.writerow(row['csvdict'])
     
+    #reset share connection
+    if not flag:
+        subprocess.run(["net", "use", CSVPATH,'/delete'])
     #post data to noco in bulk
     header = {
         'xc-token' : NOCOKEY,
