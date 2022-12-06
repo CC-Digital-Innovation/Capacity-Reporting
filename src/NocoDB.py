@@ -17,8 +17,9 @@ app = FastAPI(
 config = configparser.ConfigParser()
 config.read('config.ini')
 url = config.get('noco', 'url')
-API_TOKEN = config.get('noco', 'xc-auth')
+API_TOKEN = config.get('noco', 'api_key')
 CONTENT_TYPE = 'application/json'
+
 
 @logger.catch
 @app.get("/NocoDB/array/")
@@ -26,21 +27,26 @@ async def get_Array_Names(limit: int):
     URL = url + f"testTable/groupby?column_name=Array&limit={limit}&offset=0&shuffle=0"
 
     header = {
-        'xc-auth': API_TOKEN,
+        'xc-token': API_TOKEN,
         "accept": CONTENT_TYPE
         }
+    try:
+        response = requests.get(URL, headers=header)
+        response = response.json()
+        
+        arrayList = []
+        for dicts in response['list']:
+            for keys, values in dicts.items():
+                if keys == 'Array':
+                    arrayList.append(values)
 
-    response = requests.get(URL, headers=header)
-    response = response.json()
+        # returns list of all Arrays available
+        return arrayList
+    except:
+        return{
+            "message": "Failed to retrieve. The data does not exist or the information received is incorrect..."
+        }
 
-    arrayList = []
-    for dicts in response['list']:
-        for keys, values in dicts.items():
-            if keys == 'Array':
-                arrayList.append(values)
-
-    # returns list of all Arrays available
-    return arrayList
 
 @logger.catch
 @app.get("/NocoDB/geo/")
@@ -48,21 +54,27 @@ async def get_Geo_Locations(limit: int):
     URL = url + f"testTable/groupby?column_name=Geo&limit={limit}&offset=0&shuffle=0"
 
     header = {
-        'xc-auth': API_TOKEN,
+        'xc-token': API_TOKEN,
         "accept": CONTENT_TYPE
         }
 
-    response = requests.get(URL, headers=header)
-    response = response.json()
-    
-    geoList = []
-    for dicts in response['list']:
-        for keys, values in dicts.items():
-            if keys == 'Geo':
-                geoList.append(values)
+    try:
+        response = requests.get(URL, headers=header)
+        response = response.json()
+        
+        geoList = []
+        for dicts in response['list']:
+            for keys, values in dicts.items():
+                if keys == 'Geo':
+                    geoList.append(values)
 
-    # returns list of all Geo Locations available
-    return geoList
+        # returns list of all Geo Locations available
+        return geoList
+    except:
+        return{
+            "message": "Failed to retrieve. The data does not exist or the information received is incorrect..."
+        }
+        
 
 @logger.catch
 @app.get("/NocoDB/division/")
@@ -70,21 +82,27 @@ async def get_Divisions(limit: int):
     URL = url + f"testTable/groupby?column_name=Division&limit={limit}&offset=0&shuffle=0"
 
     header = {
-        'xc-auth': API_TOKEN,
+        'xc-token': API_TOKEN,
         "accept": CONTENT_TYPE
         }
 
-    response = requests.get(URL, headers=header)
-    response = response.json()
-    
-    divisionList = []
-    for dicts in response['list']:
-        for keys, values in dicts.items():
-            if keys == 'Division':
-                divisionList.append(values)
+    try:
+        response = requests.get(URL, headers=header)
+        response = response.json()
+        
+        divisionList = []
+        for dicts in response['list']:
+            for keys, values in dicts.items():
+                if keys == 'Division':
+                    divisionList.append(values)
 
-    # returns list of all Divisions available
-    return divisionList
+        # returns list of all Divisions available
+        return divisionList
+    except:
+        return{
+            "message": "Failed to retrieve. The data does not exist or the information received is incorrect..."
+        }
+
 
 @logger.catch
 @app.get("/NocoDB/type/")
@@ -92,21 +110,26 @@ async def get_Types(limit: int):
     URL = url + f"testTable/groupby?column_name=Type&limit={str(limit)}&offset=0&shuffle=0"
 
     header = {
-        'xc-auth': API_TOKEN,
+        'xc-token': API_TOKEN,
         "accept": CONTENT_TYPE
         }
 
-    response = requests.get(URL, headers=header)
-    response = response.json()
-    
-    typeList = []
-    for dicts in response['list']:
-        for keys, values in dicts.items():
-            if keys == 'Type':
-                typeList.append(values)
+    try:
+        response = requests.get(URL, headers=header)
+        response = response.json()
+        
+        typeList = []
+        for dicts in response['list']:
+            for keys, values in dicts.items():
+                if keys == 'Type':
+                    typeList.append(values)
 
-    # returns list of all Types available
-    return typeList
+        # returns list of all Types available
+        return typeList
+    except:
+        return{
+            "message": "Failed to retrieve. The data does not exist or the information received is incorrect..."
+        }
 
 
 @logger.catch
@@ -158,7 +181,7 @@ async def get_Storage_Capacity_Reportings(array_name: str,
     table_url = table_url + table
 
     header = {
-        'xc-auth': API_TOKEN,
+        'xc-token': API_TOKEN,
         "accept": CONTENT_TYPE
         }
     try:
