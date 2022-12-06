@@ -23,6 +23,7 @@ resources:
       # determines what files trigger the pipeline, replace with "ignore_paths" if more files need to trigger
       paths:
         - ((project_root))  # remove if no project root directory
+        - Dockerfile
   # resource for writing to repository; write-only to avoid retriggering pipeline
   - name: bump-repo
     type: git
