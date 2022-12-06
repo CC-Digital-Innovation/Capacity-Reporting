@@ -1,0 +1,6 @@
+repo: https://github.com/CC-Digital-Innovation/Capacity-Reporting.git
+branch: main
+project_root: src
+image: capacity-reporting
+manifest_path: kubernetes/capacity-reporting-deployment.yml
+pipeline: capacity-reporting

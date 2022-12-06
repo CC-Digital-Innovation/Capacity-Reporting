@@ -1,9 +1,12 @@
-import configparser
 import csv
 from itertools import zip_longest
 import os
+from pathlib import PurePath
+import secrets
 import time
-from fastapi import FastAPI
+import dotenv
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import APIKeyHeader
 from loguru import logger
 import pandas as pd
 import requests
@@ -14,16 +17,26 @@ app = FastAPI(
     description= "Downloads data from NocoDB as CSV"
 )
 
-config = configparser.ConfigParser()
-config.read('config.ini')
-url = config.get('noco', 'url')
-API_TOKEN = config.get('noco', 'api_key')
+# load secrets from .env
+dotenv.load_dotenv(PurePath(__file__).with_name('.env'))
+
+url = os.getenv('URL')
+API_TOKEN = os.getenv('API_KEY_NOCO')
+API_KEY = os.getenv('API_KEY')
 CONTENT_TYPE = 'application/json'
+
+api_key = APIKeyHeader(name='X-API-Key')
+
+def authorize(key: str = Depends(api_key)):
+    if not secrets.compare_digest(key, API_KEY):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Invalid token')
 
 
 @logger.catch
 @app.get("/NocoDB/array/")
-async def get_Array_Names(limit: int):
+async def get_Array_Names(limit: int, dependencies=[Depends(authorize)]):
     URL = url + f"testTable/groupby?column_name=Array&limit={limit}&offset=0&shuffle=0"
 
     header = {
@@ -50,7 +63,7 @@ async def get_Array_Names(limit: int):
 
 @logger.catch
 @app.get("/NocoDB/geo/")
-async def get_Geo_Locations(limit: int):
+async def get_Geo_Locations(limit: int, dependencies=[Depends(authorize)]):
     URL = url + f"testTable/groupby?column_name=Geo&limit={limit}&offset=0&shuffle=0"
 
     header = {
@@ -78,7 +91,7 @@ async def get_Geo_Locations(limit: int):
 
 @logger.catch
 @app.get("/NocoDB/division/")
-async def get_Divisions(limit: int):
+async def get_Divisions(limit: int, dependencies=[Depends(authorize)]):
     URL = url + f"testTable/groupby?column_name=Division&limit={limit}&offset=0&shuffle=0"
 
     header = {
@@ -106,7 +119,7 @@ async def get_Divisions(limit: int):
 
 @logger.catch
 @app.get("/NocoDB/type/")
-async def get_Types(limit: int):
+async def get_Types(limit: int, dependencies=[Depends(authorize)]):
     URL = url + f"testTable/groupby?column_name=Type&limit={str(limit)}&offset=0&shuffle=0"
 
     header = {
@@ -148,7 +161,8 @@ async def get_Storage_Capacity_Reportings(array_name: str,
                                           Total_Capacity: bool = False,
                                           Percent_Used: bool = False,
                                           Percentage_Used: bool = False,
-                                          x: bool = False):
+                                          x: bool = False,
+                                          dependencies=[Depends(authorize)]):
     
     fields = {'Array': 'Array', 'created_at': 'created_at', 'Type': 'Type', 'Division': 'Division',
               'Geo': 'Geo', 'SerialNumber': 'SerialNumber', 'Used': 'Used', 'Failed': 'Failed', 'Free': 'Free',
