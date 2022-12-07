@@ -25,7 +25,7 @@ spec:
       containers:
         - image: registry.quokka.ninja/ccfs/capacity-reporting:0.0.2
           name: capacity-reporting
-          args: ['/bin/bash', '-c', 'source /vault/secrets/api && python ./main.py']
+          args: ['/bin/bash', '-c', 'source /vault/secrets/api && uvicorn NocoDB:app --host 0.0.0.0 --port 8000 --root-path /capacityReporting']
           ports:
             - containerPort: 8000
       imagePullSecrets:
