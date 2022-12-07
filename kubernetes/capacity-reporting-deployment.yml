@@ -23,7 +23,7 @@ spec:
         app: capacity-reporting
     spec:
       containers:
-        - image: registry.quokka.ninja/ccfs/capacity-reporting:0.0.1
+        - image: registry.quokka.ninja/ccfs/capacity-reporting:0.0.2
           name: capacity-reporting
           args: ['/bin/bash', '-c', 'source /vault/secrets/api && python ./main.py']
           ports:
