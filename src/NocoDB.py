@@ -6,6 +6,7 @@ import secrets
 import time
 import dotenv
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.responses import FileResponse
 from fastapi.security import APIKeyHeader
 from loguru import logger
 import pandas as pd
@@ -306,9 +307,11 @@ async def get_Storage_Capacity_Reportings(array_name: str,
         # all the replaced text is written back to NeedsName.csv file
         x.writelines(text)
         x.close()
-        return{
-            "message": "CSV has been successfully downloaded!"
-        }
+
+        # downloads file
+        headers = {'Content-Disposition': f'attachment; filename={DTIME}_report.csv'}
+        return FileResponse(os.path.join(os.getcwd(), f'{DTIME}_report.csv'), media_type="text/csv", headers=headers)
+
     except:
         return{
             "message": "Failed to download data into CSV file, please try again. The data does not exist or the information received is incorrect..."
