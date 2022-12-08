@@ -35,8 +35,8 @@ def authorize(key: str = Depends(api_key)):
 
 
 @logger.catch
-@app.get("/NocoDB/array/")
-async def get_Array_Names(limit: int, dependencies=[Depends(authorize)]):
+@app.get("/NocoDB/array/", dependencies=[Depends(authorize)])
+async def get_Array_Names(limit: int):
     URL = url + f"testTable/groupby?column_name=Array&limit={limit}&offset=0&shuffle=0"
 
     header = {
@@ -62,8 +62,8 @@ async def get_Array_Names(limit: int, dependencies=[Depends(authorize)]):
 
 
 @logger.catch
-@app.get("/NocoDB/geo/")
-async def get_Geo_Locations(limit: int, dependencies=[Depends(authorize)]):
+@app.get("/NocoDB/geo/", dependencies=[Depends(authorize)])
+async def get_Geo_Locations(limit: int):
     URL = url + f"testTable/groupby?column_name=Geo&limit={limit}&offset=0&shuffle=0"
 
     header = {
@@ -90,8 +90,8 @@ async def get_Geo_Locations(limit: int, dependencies=[Depends(authorize)]):
         
 
 @logger.catch
-@app.get("/NocoDB/division/")
-async def get_Divisions(limit: int, dependencies=[Depends(authorize)]):
+@app.get("/NocoDB/division/", dependencies=[Depends(authorize)])
+async def get_Divisions(limit: int):
     URL = url + f"testTable/groupby?column_name=Division&limit={limit}&offset=0&shuffle=0"
 
     header = {
@@ -118,8 +118,8 @@ async def get_Divisions(limit: int, dependencies=[Depends(authorize)]):
 
 
 @logger.catch
-@app.get("/NocoDB/type/")
-async def get_Types(limit: int, dependencies=[Depends(authorize)]):
+@app.get("/NocoDB/type/", dependencies=[Depends(authorize)])
+async def get_Types(limit: int):
     URL = url + f"testTable/groupby?column_name=Type&limit={str(limit)}&offset=0&shuffle=0"
 
     header = {
@@ -146,7 +146,7 @@ async def get_Types(limit: int, dependencies=[Depends(authorize)]):
 
 
 @logger.catch
-@app.get("/NocoDB/filter/")
+@app.get("/NocoDB/filter/", dependencies=[Depends(authorize)])
 async def get_Storage_Capacity_Reportings(array_name: str,
                                           start_date: str, 
                                           end_date: str,
@@ -161,8 +161,7 @@ async def get_Storage_Capacity_Reportings(array_name: str,
                                           Total_Capacity: bool = False,
                                           Percent_Used: bool = False,
                                           Percentage_Used: bool = False,
-                                          x: bool = False,
-                                          dependencies=[Depends(authorize)]):
+                                          x: bool = False):
     
     fields = {'Array': 'Array', 'created_at': 'created_at', 'Type': 'Type', 'Division': 'Division',
               'Geo': 'Geo', 'SerialNumber': 'SerialNumber', 'Used': 'Used', 'Failed': 'Failed', 'Free': 'Free',
