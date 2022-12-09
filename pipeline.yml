@@ -47,10 +47,9 @@ resources:
     icon: numeric
     source:
       driver: git
-      uri: ((repo))
+      uri: ((ssh_url))
       branch: ((branch))
-      username: ((git.username))
-      password: ((git.password))
+      private_key: ((git.private_key))
       file: version
   # resource to send to slack
   - name: notifier

@@ -1,4 +1,5 @@
 repo: https://github.com/CC-Digital-Innovation/Capacity-Reporting.git
+ssh_url: git@github.com:CC-Digital-Innovation/Capacity-Reporting.git
 branch: main
 project_root: src
 image: capacity-reporting
