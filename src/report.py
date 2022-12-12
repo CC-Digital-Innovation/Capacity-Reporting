@@ -19,7 +19,9 @@ config = configparser.ConfigParser()
 config.read(CONFIGPATH)
 NOCOKEY = config.get('noco', 'api_key')
 NOCOURL = config.get('noco', 'urlbulk')
-CSVPATH = config.get('datapath', 'netpath')
+NETPATH = config.get('datapath', 'netpath')
+LOCALPATH = config.get('datapath', 'localpath')
+CSVPATHS = [NETPATH, LOCALPATH]
 SHAREUSR = config.get('datapath', 'shareuser')
 SHAREPASS = config.get('datapath', 'sharepass')
 #Helper function to define dictionary after getting each data set from a device
@@ -67,10 +69,12 @@ def csvfunc(content, filename):
 #Main code
 def main():
     #connect to fileshare
-    if not os.path.isdir(CSVPATH):
-        output = subprocess.run(["net", "use", CSVPATH, SHAREPASS, SHAREUSR, '/persistent:yes'])
-    else:
+    if NETPATH:
         flag = True
+        if not os.path.isdir(NETPATH):
+            output = subprocess.run(["net", "use", NETPATH, SHAREPASS, SHAREUSR, '/persistent:yes'])
+        else:
+            flag = False
     #Read lookup file and initialize csvdata array
     alldata = []
     with open(os.path.join(CONFIGDIR, 'lookup.json'), "r") as lookupfile:
@@ -115,29 +119,55 @@ def main():
             alldata.append(xtremiodict)
 
             #write singlecsv
-            csvfunc(xtremiodict['csvdict'], os.path.join(CSVPATH, f"{device['Name']}.csv"))
+            for path in CSVPATHS:
+                if path:
+                    csvfunc(xtremiodict['csvdict'], os.path.join(path, f"{device['Name']}.csv"))
 
 
         #Pure Storage Devices
         elif device['type']=="Pure":
-            #initialize device data
-            ipaddr = ip
-            username = device['username']
-            password = device['password']
-            #Run ps script to get pure device capacity metrics. Rounds data retrieved NOTE: This will likely move to a REST call in the future
-            pureps1 =subprocess.run(["Powershell.exe", "-File", f'{os.path.join(MODULESPATH, "pure.ps1")}', f"{ip}", f"{username}", f"{password}"], capture_output=True)
-            pureps1out= pureps1.stdout.decode('utf-8')
-            data = list(csv.DictReader(io.StringIO(pureps1out)))
-            puredata=data[0]
-            usedspace  = round(float(puredata['Used']), 3)
-            freespace  = round(float(puredata['Free']), 3)
-            totalspace = round(float(puredata['Capacity']), 3)
+            #set header and credentials for session auth
+            header = {
+                'Content-Type': 'application/json'
+            }
+
+            payload = {
+                'username' : device['username'],
+                'password' : device['password']
+            }
+            #get token
+            auth = requests.post(f'https://{ip}/api/1.17/auth/apitoken', data = json.dumps(payload), headers = header, verify = False)
+
+            #init session
+            sess = requests.Session()
+            s = sess.post(f'https://{ip}/api/1.17/auth/session', data = json.dumps(auth.json()), headers = header, verify = False)
+
+            #get array capacity values and hardware data
+            array = sess.get(f'https://{ip}/api/1.17/array?space=true', headers = header, verify = False)
+            drives = sess.get(f'https://{ip}/api/1.17/drive', headers = header, verify = False)
+            
+            #calculate and normalize data for csv
+            capdata = array.json()[0]
+            pureusedspace = round((capdata['snapshots'] + capdata['volumes'] + capdata['shared_space'])*(GB/1024),3)
+            puretotal = round(capdata['capacity']*(GB/1024),3)
+            purefreespace = round(puretotal-pureusedspace, 3)
+            purepercentage = 1-((puretotal-pureusedspace)/puretotal)
+            purepercent = purepercentage*100
+            
+            #check for drive failures
+            purefailed =0
+            for drive in drives.json():
+                if drive['status']!= "healthy" and drive['status'] != "unused":
+                    print(drive['status'])
+                    purefailed = purefailed +1
             
             #Calls helper function to make dict and adds to running list
-            puredict = makedict(device, usedspace*1024, 0, freespace*1024, totalspace*1024, float(puredata['PercUsed']), float(puredata['Used(%)']))
+            puredict = makedict(device, pureusedspace, purefailed, purefreespace, puretotal, purepercentage, purepercent)
             alldata.append(puredict)
             #write singlecsv
-            csvfunc(puredict['csvdict'], os.path.join(CSVPATH, f"{device['Name']}.csv"))
+            for path in CSVPATHS:
+                if path:
+                    csvfunc(puredict['csvdict'], os.path.join(path, f"{device['Name']}.csv"))
 
         #VMAX
         elif device['type']=="VMAX":
@@ -158,7 +188,9 @@ def main():
                         vmaxdict = makedict(device, float(split[3])*1024, 0, float(split[2])*1024, float(split[1])*1024, percused, percused*100)
                         
                         #write singlecsv
-                        csvfunc(vmaxdict['csvdict'], os.path.join(CSVPATH, f"{device['Name']}.csv"))
+                        for path in CSVPATHS:
+                            if path:
+                                csvfunc(vmaxdict['csvdict'], os.path.join(path, f"{device['Name']}.csv"))
 
             #Get Failed drives
             symdisk = subprocess.run(["symdisk", "-sid", f"{device['sid']}", "list", "-failed"], capture_output=True)
@@ -200,20 +232,25 @@ def main():
             alldata.append(DDdict)
 
             #write singlecsv
-            csvfunc(DDdict['csvdict'], os.path.join(CSVPATH, f"{device['Name']}.csv"))
+            for path in CSVPATHS:
+                if path:
+                    csvfunc(DDdict['csvdict'], os.path.join(path, f"{device['Name']}.csv"))
 
     #Writes csv data based on data added to csv list
-    nocodata=[]
-    with open(os.path.join(CSVPATH, f'report.csv'), "w", newline = '') as f:
-        writer = csv.DictWriter(f, alldata[0]['csvdict'].keys())
-        writer.writeheader()
-        for row in alldata:
-            nocodata.append(row['nocodict'])
-            writer.writerow(row['csvdict'])
+    for path in CSVPATHS:
+        if path:
+            nocodata=[]
+            with open(os.path.join(path, f'report.csv'), "w", newline = '') as f:
+                writer = csv.DictWriter(f, alldata[0]['csvdict'].keys())
+                writer.writeheader()
+                for row in alldata:
+                    nocodata.append(row['nocodict'])
+                    writer.writerow(row['csvdict'])
     
     #reset share connection
-    if not flag:
-        subprocess.run(["net", "use", CSVPATH,'/delete'])
+    if NETPATH:
+        if flag:
+            subprocess.run(["net", "use", NETPATH,'/delete'])
     #post data to noco in bulk
     header = {
         'xc-token' : NOCOKEY,
@@ -221,7 +258,6 @@ def main():
     }
 
     response = requests.post(NOCOURL + 'testTable', headers=header, data = json.dumps(nocodata))
-    print(response)
 
 
     
