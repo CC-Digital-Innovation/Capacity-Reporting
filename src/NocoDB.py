@@ -151,7 +151,7 @@ async def get_Types(limit: int):
 async def get_Storage_Capacity_Reportings(array_name: str,
                                           start_date: str, 
                                           end_date: str,
-                                          Array: bool = False,
+                                          Get_All_Data: bool = False,
                                           Type: bool = False,
                                           Division: bool = False,
                                           Geo: bool = False,
@@ -171,7 +171,7 @@ async def get_Storage_Capacity_Reportings(array_name: str,
     # this dictionary holds respective string and boolean values. The key names are used as csv column names
     dict = {
         "created_at": start_date,
-        "Array": Array,
+        "Array": True,
         "Type": Type,
         "Division": Division,
         "Geo": Geo,
@@ -226,6 +226,11 @@ async def get_Storage_Capacity_Reportings(array_name: str,
         Percentage_Used_ = []
         x_ = []
 
+
+        # If True, all data for each column will be returned
+        if Get_All_Data is True:
+            for keys in dict.keys():
+                dict[keys] = True
 
         for columns in fields.values():
             for data_ofColumns in df[f'{columns}']:
