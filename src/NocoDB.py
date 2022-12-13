@@ -227,7 +227,7 @@ async def get_Storage_Capacity_Reportings(array_name: str,
         x_ = []
 
 
-        # If True, all data for each column will be returned
+        # If True, all data for each column will be returned.
         if Get_All_Data is True:
             for keys in dict.keys():
                 dict[keys] = True
