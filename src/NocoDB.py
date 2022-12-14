@@ -13,7 +13,7 @@ import pandas as pd
 import requests
 
 
-# Title and description of 'Capacity Reporting'
+# Title and description of 'Capacity Reporting'.
 app = FastAPI(
     title = "Capacity Storage",
     description= "Downloads data from NocoDB as CSV"
@@ -22,13 +22,13 @@ app = FastAPI(
 # Load secrets from .env
 dotenv.load_dotenv(PurePath(__file__).with_name('.env'))
 
-# Set constant variables for the headers
+# Set constant variables for the headers.
 url = os.getenv('URL')
 API_TOKEN = os.getenv('API_KEY_NOCO')
 API_KEY = os.getenv('API_KEY')
 CONTENT_TYPE = 'application/json'
 
-# Authorization Token
+# Authorization Token.
 api_key = APIKeyHeader(name='X-API-Key')
 
 # Will only allow end user to use the API if the Authorization Token matches.
@@ -321,7 +321,7 @@ async def get_Storage_Capacity_Reportings(array_name: str,
 
             # Write the headers.
             writer.writerow(csv_Headings)
-            
+
             # Write the rows.
             for write_data in csv_Rows:
                 writer.writerow(write_data)
