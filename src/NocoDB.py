@@ -13,21 +13,26 @@ import pandas as pd
 import requests
 
 
+# Title and description of 'Capacity Reporting'
 app = FastAPI(
     title = "Capacity Storage",
     description= "Downloads data from NocoDB as CSV"
 )
 
-# load secrets from .env
+# Load secrets from .env
 dotenv.load_dotenv(PurePath(__file__).with_name('.env'))
 
+# Set constant variables for the headers
 url = os.getenv('URL')
 API_TOKEN = os.getenv('API_KEY_NOCO')
 API_KEY = os.getenv('API_KEY')
 CONTENT_TYPE = 'application/json'
 
+# Authorization Token
 api_key = APIKeyHeader(name='X-API-Key')
 
+# Will only allow end user to use the API if the Authorization Token matches.
+# Otherwise, it will return 'Invalid Token' and response code.
 def authorize(key: str = Depends(api_key)):
     if not secrets.compare_digest(key, API_KEY):
         raise HTTPException(
@@ -35,6 +40,7 @@ def authorize(key: str = Depends(api_key)):
             detail='Invalid token')
 
 
+# [GET] Array name(s). Integer value taken to retrieve that many arrays if exists, otherwise, it will return up-to or the exact number.
 @logger.catch
 @app.get("/NocoDB/array/", dependencies=[Depends(authorize)])
 async def get_Array_Names(limit: int):
@@ -44,24 +50,30 @@ async def get_Array_Names(limit: int):
         'xc-token': API_TOKEN,
         "accept": CONTENT_TYPE
         }
+
+    # Will try to request the Array information with the header provided. If feasible, then the Array(s) will return.
     try:
         response = requests.get(URL, headers=header)
         response = response.json()
         
+        # Appends all Array(s) found into the 'arrayList' and return the list to end user.
         arrayList = []
         for dicts in response['list']:
             for keys, values in dicts.items():
                 if keys == 'Array':
                     arrayList.append(values)
 
-        # returns list of all Arrays available
+        # Returns list of all Arrays available
         return arrayList
+
+    # Otherwise, if the request for the Array information is invalid, then a return message will be provided to the end user.
     except:
         return{
             "message": "Failed to retrieve. The data does not exist or the information received is incorrect..."
         }
 
 
+# [GET] Geo Location(s). Integer value taken to retrieve the Geo Location(s) if exist, otherwise, it will return up-to or the exact number.
 @logger.catch
 @app.get("/NocoDB/geo/", dependencies=[Depends(authorize)])
 async def get_Geo_Locations(limit: int):
@@ -72,10 +84,12 @@ async def get_Geo_Locations(limit: int):
         "accept": CONTENT_TYPE
         }
 
+    # Will try to request the Geo Location information with the header provided. If feasible, then the Geo Location(s) will return.
     try:
         response = requests.get(URL, headers=header)
         response = response.json()
         
+        # Appends all Geo Location(s) found into the 'geoList' and return the list to end user.
         geoList = []
         for dicts in response['list']:
             for keys, values in dicts.items():
@@ -84,12 +98,15 @@ async def get_Geo_Locations(limit: int):
 
         # returns list of all Geo Locations available
         return geoList
+
+    # Otherwise, if the request for the Geo Location information is invalid, then a return message will be provided to the end user.
     except:
         return{
             "message": "Failed to retrieve. The data does not exist or the information received is incorrect..."
         }
         
 
+# [GET] Division(s). Integer value taken to retrieve the Division(s) if exist, otherwise, it will return up-to or the exact number.
 @logger.catch
 @app.get("/NocoDB/division/", dependencies=[Depends(authorize)])
 async def get_Divisions(limit: int):
@@ -100,10 +117,12 @@ async def get_Divisions(limit: int):
         "accept": CONTENT_TYPE
         }
 
+    # Will try to request the Division information with the header provided. If feasible, then the Division(s) will return.
     try:
         response = requests.get(URL, headers=header)
         response = response.json()
         
+        # Appends all Division(s) found into the 'divisionList' and return the list to end user.
         divisionList = []
         for dicts in response['list']:
             for keys, values in dicts.items():
@@ -112,12 +131,15 @@ async def get_Divisions(limit: int):
 
         # returns list of all Divisions available
         return divisionList
+
+    # Otherwise, if the request for the Division information is invalid, then a return message will be provided to the end user.
     except:
         return{
             "message": "Failed to retrieve. The data does not exist or the information received is incorrect..."
         }
 
 
+# [GET] Type(s). Integer value taken to retrieve the Type(s) if exist, otherwise, it will return up-to or the exact number.
 @logger.catch
 @app.get("/NocoDB/type/", dependencies=[Depends(authorize)])
 async def get_Types(limit: int):
@@ -128,10 +150,12 @@ async def get_Types(limit: int):
         "accept": CONTENT_TYPE
         }
 
+    # Will try to request the Type information with the header provided. If feasible, then the Type(s) will return.
     try:
         response = requests.get(URL, headers=header)
         response = response.json()
         
+        # Appends all Type(s) found into the 'typeList' and return the list to end user.
         typeList = []
         for dicts in response['list']:
             for keys, values in dicts.items():
@@ -140,12 +164,16 @@ async def get_Types(limit: int):
 
         # returns list of all Types available
         return typeList
+
+    # Otherwise, if the request for the Type information is invalid, then a return message will be provided to the end user.
     except:
         return{
             "message": "Failed to retrieve. The data does not exist or the information received is incorrect..."
         }
 
 
+# [GET] Allows end user to get all data, or filter column fields to retrieve only information wanted using an
+#       Array name with a start/end date range.
 @logger.catch
 @app.get("/NocoDB/filter/", dependencies=[Depends(authorize)])
 async def get_Storage_Capacity_Reportings(array_name: str,
@@ -168,7 +196,7 @@ async def get_Storage_Capacity_Reportings(array_name: str,
               'Geo': 'Geo', 'SerialNumber': 'SerialNumber', 'Used': 'Used', 'Failed': 'Failed', 'Free': 'Free',
               'TotalCapacity': 'TotalCapacity', 'PercentUsed': 'PercentUsed', 'PercentUsedString': 'PercentUsedString', 'x': 'x'}
 
-    # this dictionary holds respective string and boolean values. The key names are used as csv column names
+    # Dictionary holds respective string and boolean values. The key names are used as csv column names
     dict = {
         "created_at": start_date,
         "Array": True,
@@ -185,11 +213,12 @@ async def get_Storage_Capacity_Reportings(array_name: str,
         "x": x
         }
 
+    # Appends the column names into the list to be used in the CSV
     csv_Headings = []
     for k in dict.keys():
         csv_Headings.append(k)
 
-    
+    # URL endpoint to query the Array Name
     table_url = url + 'testTable/?'
     table = f"&where=(Array,eq,{array_name})"
     table_url = table_url + table
@@ -198,11 +227,13 @@ async def get_Storage_Capacity_Reportings(array_name: str,
         'xc-token': API_TOKEN,
         "accept": CONTENT_TYPE
         }
+
+    # Will try to request the query with the header provided and initiate the process of getting data needed to produce a CSV file.
     try:
         response = requests.get(table_url, headers=header)
         response = response.json()
 
-        
+        # Stores the data into DataFrame
         df = pd.DataFrame(response['list'])
 
         start_date = start_date + " 00:00:00" # 00:00:00
@@ -212,6 +243,7 @@ async def get_Storage_Capacity_Reportings(array_name: str,
         data = (df['created_at'] >= start_date) & (df['created_at'] <= end_date)
         df = df.loc[data]
 
+        # Lists are used to append content of each column
         Date_ = []
         Array_ = []
         Type_ = []
@@ -227,11 +259,13 @@ async def get_Storage_Capacity_Reportings(array_name: str,
         x_ = []
 
 
-        # If True, all data for each column will be returned
+        # If True, all data for each column will be returned.
         if Get_All_Data is True:
             for keys in dict.keys():
                 dict[keys] = True
 
+        # Appends data into lists if the end user wants that specific column's data in the CSV file by selecting 'True'.
+        # 'created_at' and 'Array' are always True, regardless if the entire CSV file is empty.
         for columns in fields.values():
             for data_ofColumns in df[f'{columns}']:
                 if columns == "created_at":
@@ -262,6 +296,8 @@ async def get_Storage_Capacity_Reportings(array_name: str,
                     x_.append(data_ofColumns)
         
 
+        # zip() function allows each list to pair next to each other in sequential order.
+        # The lists become the rows for the columns.
         csv_Rows = list(zip_longest(
                             Date_,
                             Array_,
@@ -278,25 +314,26 @@ async def get_Storage_Capacity_Reportings(array_name: str,
                             x_
                         ))
 
+        # Creates a CSV file and includes a timestamp for the file name.
         DTIME = time.strftime("%Y_%m_%d_%H")
         with open(os.path.join(f'{DTIME}_report.csv'), 'w', encoding='UTF8', newline='') as f:
             writer = csv.writer(f)
 
-            # write the headers
+            # Write the headers.
             writer.writerow(csv_Headings)
-            # write the rows
+            
+            # Write the rows.
             for write_data in csv_Rows:
                 writer.writerow(write_data)
 
-        # Removes all unnecessary chars/symbols from csv file
-        # reading the CSV file
+        # Reading the CSV file and placing inside 'text' variable.
         text = open(os.path.join(f'{DTIME}_report.csv'), "r")
 
-        #join() method combines all contents of 
-        # csv file and formed as a string
+        # join() method combines all contents of 
+        # CSV file and formed as a string
         text = ''.join([i for i in text]) 
 
-        # search and replace the contents
+        # Search and replace the contents (unnecessary information).
         text = text.replace("[None]", "") 
         text = text.replace("None", "") 
         text = text.replace("[]", "") 
@@ -306,17 +343,18 @@ async def get_Storage_Capacity_Reportings(array_name: str,
         text = text.replace(f"\']", "")
         text = text.replace(f"\'", "")
 
-        # NeedsName.csv is the output file opened in write mode
+        # Opens output file in write mode inside variable 'x'.
         x = open(os.path.join(f'{DTIME}_report.csv'),"w")
 
-        # all the replaced text is written back to NeedsName.csv file
+        # All the replaced text is written back to CSV file.
         x.writelines(text)
         x.close()
 
-        # downloads file
+        # Allows end user to download CSV file
         headers = {'Content-Disposition': f'attachment; filename={DTIME}_report.csv'}
         return FileResponse(os.path.join(os.getcwd(), f'{DTIME}_report.csv'), media_type="text/csv", headers=headers)
 
+    # Otherwise, if the request is invalid, then a return message will be provided to the end user.
     except:
         return{
             "message": "Failed to download data into CSV file, please try again. The data does not exist or the information received is incorrect..."
