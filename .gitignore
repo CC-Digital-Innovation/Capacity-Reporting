@@ -148,3 +148,4 @@ config.ini
 config-NocoDB.ini
 runreport.bat
 CSVData/
+*.log
