@@ -92,7 +92,7 @@ Utilizes the report script to gather capacity reporting for XtremIO, Pure Storag
 ## How
 <center>
 <a href="https://github.com/CC-Digital-Innovation/Capacity-Reporting">
-    <img src="images/Diagram.PNG" alt="Logo" width="650" height="750">
+    <img src="images/Diagram.png" alt="Logo" width="650" height="750">
   </a>
 </center>
 
