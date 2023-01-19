@@ -7,3 +7,10 @@ url =     Noco base url
 netpath = Network path (ie \\HOST\target\path)
 shareuser = network user
 sharepass = network password
+localpath = path to local data saves
+
+[messageq]
+rmquser = rabbitmq username
+rmqpass = rabbitmq password
+rmqip   = rabbitmq ip address
+rmqport = rabbitmq port
