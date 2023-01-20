@@ -12,7 +12,6 @@ from loguru import logger
 import pandas as pd
 import requests
 import pika
-import configparser
 
 
 # Title and description of 'Capacity Reporting'.
@@ -364,17 +363,12 @@ async def get_Storage_Capacity_Reportings(array_name: str,
 
 @logger.catch
 @app.post("/NocoDB/runReport/", dependencies=[Depends(authorize)])
-async def run_report(report: str):
+async def run_report(report: str, cust: str):
     #init config variabled - note this will move to vaults data soon
-    cwd = os.path.dirname(__file__)
-    configdir=os.path.join(cwd,'config')
-    configpath=os.path.join(configdir,'config.ini')
-    config = configparser.ConfigParser()
-    config.read(configpath)
-    rabbmquser = config.get('messageq', 'rmquser')
-    rabbmqpass = config.get('messageq', 'rmqpass')
-    rabbmqip = config.get('messageq', 'rmqip')
-    rabbmqport = config.get('messageq', 'rmqport')
+    rabbmquser = os.getenv('RMQUSER')
+    rabbmqpass = os.getenv('RMQPASS')
+    rabbmqip = os.getenv('RMQIP')
+    rabbmqport = os.getenv('RMQPORT')
 
     #connect to mq pod
     creds = pika.PlainCredentials(rabbmquser, rabbmqpass)
@@ -382,9 +376,9 @@ async def run_report(report: str):
     channel = connection.channel()
 
     #
-    channel.queue_declare(queue=config.get('messageq', 'customer'))
+    channel.queue_declare(queue=f'{cust}')
 
     #send message to queue and close connection
-    channel.basic_publish(exchange='', routing_key=config.get('messageq', 'customer'), body=f'Run {report} Report')
-    print(f" [x] Sent {report} request to {config.get('messageq', 'customer')} queue")
+    channel.basic_publish(exchange='', routing_key=f'{cust}', body=f'Run {report} Report')
+    print(f" [x] Sent {report} request to {{cust}} queue")
     connection.close()

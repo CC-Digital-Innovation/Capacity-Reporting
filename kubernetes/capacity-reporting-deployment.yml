@@ -18,6 +18,10 @@ spec:
             export API_KEY_NOCO="{{ .Data.data.noco_api_key }}"
             export URL="{{ .Data.data.noco_url }}"
             export API_KEY="{{ .Data.data.api_key }}"
+            export RMQUSER="{{ .Data.data.rmquser }}"
+            export RMQPASS="{{ .Data.data.rmqpass }}"
+            export RMQIP="{{ .Data.data.rmqip }}"
+            export RMQPORT="{{ .Data.data.rmqport }}"
           {{- end }}
       labels:
         app: capacity-reporting
