@@ -4,6 +4,7 @@ from loguru import logger
 import logging
 import os, sys
 import subprocess
+import ssl
 
 #globals
 cwd = os.path.dirname(__file__)
@@ -50,7 +51,8 @@ def init_logs():
 def main():
     init_logs()
     creds = pika.PlainCredentials(rabbmquser, rabbmqpass)
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbmqip, port=rabbmqport, credentials= creds))
+    ssl_options = pika.SSLOptions(ssl.create_default_context())
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbmqip, port=rabbmqport, credentials= creds, ssl_options=ssl_options))
     channel = connection.channel()
 
     #

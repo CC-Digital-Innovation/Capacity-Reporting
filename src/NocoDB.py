@@ -12,6 +12,7 @@ from loguru import logger
 import pandas as pd
 import requests
 import pika
+import ssl
 
 
 # Title and description of 'Capacity Reporting'.
@@ -372,7 +373,8 @@ async def run_report(report: str, cust: str):
 
     #connect to mq pod
     creds = pika.PlainCredentials(rabbmquser, rabbmqpass)
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbmqip, port=rabbmqport, credentials= creds))
+    ssl_options = pika.SSLOptions(ssl.create_default_context())
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbmqip, port=rabbmqport, credentials= creds, ssl_options=ssl_options))
     channel = connection.channel()
 
     #
