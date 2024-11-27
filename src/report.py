@@ -1,4 +1,6 @@
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
 import json
 import subprocess
 import csv
@@ -290,12 +292,15 @@ def main():
                 "username" : f"{device['username']}",
                 "password" : f"{device['password']}"
             }
+            retries = Retry(total=4, status_forcelist=[400, 401, 500, 502, 503, 504])
+            ddsess = requests.Session()
+            ddsess.mount('http://', HTTPAdapter(max_retries=retries))
             logger.info('Getting auth token for Data Domain API')
-            auth = requests.post(f'https://{ip}:3009/rest/v1.0/auth' , headers=headers, data = json.dumps(creds), verify =False)
-            logger.debug(f'authentication reponse code: {auth}')
+            auth = ddsess.post(f'https://{ip}:3009/rest/v1.0/auth' , headers=headers, data = json.dumps(creds), verify =False)
+            logger.debug(f'authentication reponse code: {auth.text}')
             headers['X-DD-AUTH-TOKEN']=auth.headers['X-DD-AUTH-TOKEN']
             logger.info('Using token to get system capacity data')
-            system = requests.get(f'https://{ip}:3009/rest/v1.0/system' , headers=headers, verify =False)
+            system = ddsess.get(f'https://{ip}:3009/rest/v1.0/system' , headers=headers, verify =False)
             logger.debug(f'system response code: {system}')
 
             #calc percentages
@@ -322,12 +327,15 @@ def main():
         if path:
             logger.debug(f'Writing to {path}')
             nocodata=[]
-            with open(os.path.join(path, f'report.csv'), "w", newline = '') as f:
-                writer = csv.DictWriter(f, alldata[0]['csvdict'].keys())
-                writer.writeheader()
-                for row in alldata:
-                    nocodata.append(row['nocodict'])
-                    writer.writerow(row['csvdict'])
+            try:
+                with open(os.path.join(path, f'report.csv'), "w", newline = '') as f:
+                    writer = csv.DictWriter(f, alldata[0]['csvdict'].keys())
+                    writer.writeheader()
+                    for row in alldata:
+                        nocodata.append(row['nocodict'])
+                        writer.writerow(row['csvdict'])
+            except Exception as e:
+                logger.debug(f'Error Writing full report: {e}')
     
     #reset share connection
     if NETPATH:

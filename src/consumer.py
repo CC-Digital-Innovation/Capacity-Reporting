@@ -3,8 +3,8 @@ import pika
 from loguru import logger
 import logging
 import os, sys
-import subprocess
 import ssl
+import report
 
 #globals
 cwd = os.path.dirname(__file__)
@@ -63,7 +63,7 @@ def main():
         print(f'Message recived: {bodystr}')
         if 'Capacity' in bodystr:
             logger.debug(f'running Capacity Report')
-            subprocess.call(['python', 'report.py'], shell=True)
+            report.main()
 
 
     channel.basic_consume(queue=config.get('messageq', 'customer'), on_message_callback=callback, auto_ack=True)
